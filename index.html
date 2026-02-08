@@ -12,7 +12,6 @@
             --accent-color: #a8d5ba;
         }
 
-        /* 初始狀態完全隱藏，防止閃爍與雜訊 */
         body {
             margin: 0;
             display: flex;
@@ -22,12 +21,12 @@
             min-height: 100vh;
             background: #f4f6f4;
             font-family: 'Montserrat', 'Noto Sans TC', sans-serif;
-            visibility: hidden; 
+            visibility: hidden; /* 初始隱藏防止 GitHub 雜訊 */
         }
 
         body.loaded { visibility: visible; }
 
-        /* --- 橫版膠囊插件樣式 --- */
+        /* --- 橫版膠囊樣式 --- */
         .widget-card {
             background-color: var(--bg-color);
             color: var(--text-color);
@@ -42,7 +41,6 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.04);
             border: 1px solid rgba(0,0,0,0.06);
             box-sizing: border-box;
-            position: relative;
         }
 
         .left { display: flex; align-items: center; gap: 20px; }
@@ -66,10 +64,11 @@
         }
         h3 { margin: 0 0 20px 0; font-size: 1.2rem; color: #333; text-align: center; }
         .field { margin-bottom: 15px; text-align: left; }
-        label { display: block; font-size: 11px; color: #aaa; margin-bottom: 6px; font-weight: 600; }
+        label { display: block; font-size: 11px; color: #aaa; margin-bottom: 4px; font-weight: 600; }
         input { width: 100%; padding: 10px; border: 1px solid #f0f0f0; border-radius: 10px; box-sizing: border-box; outline: none; }
         .colors { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
         .btn { width: 100%; padding: 14px; background: #4a5d4e; color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; margin-top: 15px; }
+        #msg { color: #81c784; font-size: 12px; text-align: center; margin-top: 10px; display: none; }
 
         /* 嵌入模式隱藏生成器 */
         body.widget-mode #generator { display: none; }
@@ -94,60 +93,88 @@
 
     <div id="generator">
         <h3>橫式插件配置</h3>
-        <div class="field"><label>圖標 Emoji</label><input type="text" id="in-i" value="🌿"></div>
-        <div class="field"><label>標題文字</label><input type="text" id="in-t" value="相遇的日子"></div>
-        <div class="field"><label>開始日期</label><input type="date" id="in-d" value="2026-01-24"></div>
+        <div class="field"><label>圖標 Emoji</label><input type="text" id="in-i" value="🌿" oninput="preview()"></div>
+        <div class="field"><label>標題文字</label><input type="text" id="in-t" value="相遇的季節" oninput="preview()"></div>
+        <div class="field"><label>開始日期</label><input type="date" id="in-d" value="2026-01-24" oninput="preview()"></div>
         <div class="colors">
-            <div class="field"><label>數字色</label><input type="color" id="in-a" value="#a8d5ba"></div>
-            <div class="field"><label>文字色</label><input type="color" id="in-tx" value="#4a5d4e"></div>
-            <div class="field"><label>背景色</label><input type="color" id="in-bg" value="#ffffff"></div>
+            <div class="field"><label>數字色</label><input type="color" id="in-a" value="#a8d5ba" oninput="preview()"></div>
+            <div class="field"><label>文字色</label><input type="color" id="in-tx" value="#4a5d4e" oninput="preview()"></div>
+            <div class="field"><label>背景色</label><input type="color" id="in-bg" value="#ffffff" oninput="preview()"></div>
         </div>
         <button class="btn" onclick="copyURL()">複製專屬網址</button>
+        <div id="msg">✓ 網址已複製</div>
     </div>
 
     <script>
-        function update() {
-            const p = new URLSearchParams(window.location.search);
-            const title = p.get('t') || "相遇的日子";
-            document.title = title; // 動態更新分頁標題
-
-            document.getElementById('v-icon').innerText = p.get('i') || "🌿";
-            document.getElementById('v-title').innerText = title;
-            document.getElementById('v-date').innerText = "START: " + (p.get('d') || "2026-01-24").replace(/-/g, '.');
-
-            const start = new Date(p.get('d') || "2026-01-24");
+        // 核心計算函數：傳入日期字串，回傳天數與單位
+        function calculateDays(dateStr) {
+            const start = new Date(dateStr || "2026-01-24");
             const today = new Date();
-            today.setHours(0,0,0,0); start.setHours(0,0,0,0);
+            today.setHours(0,0,0,0);
+            start.setHours(0,0,0,0);
             const diff = Math.floor((today - start) / 86400000);
-            
-            const numEl = document.getElementById('v-num');
-            const unitEl = document.getElementById('v-unit');
+            return {
+                num: diff >= 0 ? diff + 1 : Math.abs(diff),
+                unit: diff >= 0 ? "已度過" : "倒數中"
+            };
+        }
 
-            if (diff >= 0) {
-                numEl.innerText = diff + 1; // Day + 1 邏輯
-                unitEl.innerText = "已度過";
-            } else {
-                numEl.innerText = Math.abs(diff); 
-                unitEl.innerText = "倒數中";
-            }
+        // 實時預覽功能：直接讀取 Input 欄位的值
+        function preview() {
+            const i = document.getElementById('in-i').value;
+            const t = document.getElementById('in-t').value;
+            const d = document.getElementById('in-d').value;
+            const a = document.getElementById('in-a').value;
+            const tx = document.getElementById('in-tx').value;
+            const bg = document.getElementById('in-bg').value;
 
-            document.documentElement.style.setProperty('--accent-color', p.get('a') || "#a8d5ba");
-            document.documentElement.style.setProperty('--text-color', p.get('tx') || "#4a5d4e");
-            document.documentElement.style.setProperty('--bg-color', p.get('bg') || "#ffffff");
+            // 更新預覽文字
+            document.getElementById('v-icon').innerText = i;
+            document.getElementById('v-title').innerText = t;
+            document.getElementById('v-date').innerText = "START: " + d.replace(/-/g, '.');
 
-            // 判斷是否為嵌入模式
+            // 重新計算天數 (關鍵改動)
+            const result = calculateDays(d);
+            document.getElementById('v-num').innerText = result.num;
+            document.getElementById('v-unit').innerText = result.unit;
+
+            // 更新顏色
+            document.documentElement.style.setProperty('--accent-color', a);
+            document.documentElement.style.setProperty('--text-color', tx);
+            document.documentElement.style.setProperty('--bg-color', bg);
+        }
+
+        // 頁面載入時的初始化 (讀取網址參數)
+        function init() {
+            const p = new URLSearchParams(window.location.search);
             if (p.get('i') || p.get('t')) {
+                // 進入嵌入模式
                 document.body.classList.add('widget-mode');
+                const title = p.get('t') || "重要日子";
+                document.title = title;
+
+                document.getElementById('v-icon').innerText = p.get('i') || "🌿";
+                document.getElementById('v-title').innerText = title;
+                document.getElementById('v-date').innerText = "START: " + (p.get('d') || "2026.01.24").replace(/-/g, '.');
+
+                const result = calculateDays(p.get('d'));
+                document.getElementById('v-num').innerText = result.num;
+                document.getElementById('v-unit').innerText = result.unit;
+
+                document.documentElement.style.setProperty('--accent-color', p.get('a') || "#a8d5ba");
+                document.documentElement.style.setProperty('--text-color', p.get('tx') || "#4a5d4e");
+                document.documentElement.style.setProperty('--bg-color', p.get('bg') || "#ffffff");
+            } else {
+                // 進入產生器模式：同步一次初始值
+                preview();
             }
-            
-            // 載入完成，顯示內容
             document.body.classList.add('loaded');
         }
 
         function copyURL() {
             const i = encodeURIComponent(document.getElementById('in-i').value);
             const t = encodeURIComponent(document.getElementById('in-t').value);
-            const d = document.getElementById('in-d').value;
+            const d = document.getElementById('in-date').value;
             const a = encodeURIComponent(document.getElementById('in-a').value);
             const tx = encodeURIComponent(document.getElementById('in-tx').value);
             const bg = encodeURIComponent(document.getElementById('in-bg').value);
@@ -161,11 +188,13 @@
             el.select();
             document.execCommand('copy');
             document.body.removeChild(el);
-            alert("橫式網址已複製！");
+            
+            const msg = document.getElementById('msg');
+            msg.style.display = 'block';
+            setTimeout(() => msg.style.display = 'none', 3000);
         }
 
-        window.onload = update;
+        window.onload = init;
     </script>
 </body>
-
 </html>
