@@ -21,7 +21,7 @@
             min-height: 100vh;
             background: #f4f6f4;
             font-family: 'Montserrat', 'Noto Sans TC', sans-serif;
-            visibility: hidden; /* 初始隱藏防止 GitHub 雜訊 */
+            visibility: hidden; /* 防止 GitHub 載入雜訊 */
         }
 
         body.loaded { visibility: visible; }
@@ -68,9 +68,9 @@
         input { width: 100%; padding: 10px; border: 1px solid #f0f0f0; border-radius: 10px; box-sizing: border-box; outline: none; }
         .colors { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
         .btn { width: 100%; padding: 14px; background: #4a5d4e; color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; margin-top: 15px; }
-        #msg { color: #81c784; font-size: 12px; text-align: center; margin-top: 10px; display: none; }
+        #msg { color: #81c784; font-size: 12px; text-align: center; margin-top: 10px; display: none; font-weight: bold; }
 
-        /* 嵌入模式隱藏生成器 */
+        /* 嵌入模式隱藏面板 */
         body.widget-mode #generator { display: none; }
         body.widget-mode { background: transparent !important; }
     </style>
@@ -81,8 +81,8 @@
         <div class="left">
             <span class="icon" id="v-icon">🌿</span>
             <div class="info">
-                <div class="title-text" id="v-title"> </div>
-                <div class="date-label" id="v-date"> </div>
+                <div class="title-text" id="v-title">相遇的季節</div>
+                <div class="date-label" id="v-date">START: 2026.01.24</div>
             </div>
         </div>
         <div class="right">
@@ -94,7 +94,7 @@
     <div id="generator">
         <h3>橫式插件配置</h3>
         <div class="field"><label>圖標 Emoji</label><input type="text" id="in-i" value="🌿" oninput="preview()"></div>
-        <div class="field"><label>標題文字</label><input type="text" id="in-t" value="相遇的日子" oninput="preview()"></div>
+        <div class="field"><label>標題文字</label><input type="text" id="in-t" value="相遇的季節" oninput="preview()"></div>
         <div class="field"><label>開始日期</label><input type="date" id="in-d" value="2026-01-24" oninput="preview()"></div>
         <div class="colors">
             <div class="field"><label>數字色</label><input type="color" id="in-a" value="#a8d5ba" oninput="preview()"></div>
@@ -102,11 +102,11 @@
             <div class="field"><label>背景色</label><input type="color" id="in-bg" value="#ffffff" oninput="preview()"></div>
         </div>
         <button class="btn" onclick="copyURL()">複製專屬網址</button>
-        <div id="msg">✓ 網址已複製</div>
+        <div id="msg">✓ 網址已複製！</div>
     </div>
 
     <script>
-        // 核心計算函數：傳入日期字串，回傳天數與單位
+        // 計算邏輯
         function calculateDays(dateStr) {
             const start = new Date(dateStr || "2026-01-24");
             const today = new Date();
@@ -119,7 +119,7 @@
             };
         }
 
-        // 實時預覽功能：直接讀取 Input 欄位的值
+        // 即時預覽 (修正 ID 一致性)
         function preview() {
             const i = document.getElementById('in-i').value;
             const t = document.getElementById('in-t').value;
@@ -128,34 +128,30 @@
             const tx = document.getElementById('in-tx').value;
             const bg = document.getElementById('in-bg').value;
 
-            // 更新預覽文字
             document.getElementById('v-icon').innerText = i;
             document.getElementById('v-title').innerText = t;
             document.getElementById('v-date').innerText = "START: " + d.replace(/-/g, '.');
 
-            // 重新計算天數 (關鍵改動)
             const result = calculateDays(d);
             document.getElementById('v-num').innerText = result.num;
             document.getElementById('v-unit').innerText = result.unit;
 
-            // 更新顏色
             document.documentElement.style.setProperty('--accent-color', a);
             document.documentElement.style.setProperty('--text-color', tx);
             document.documentElement.style.setProperty('--bg-color', bg);
         }
 
-        // 頁面載入時的初始化 (讀取網址參數)
+        // 初始化
         function init() {
             const p = new URLSearchParams(window.location.search);
             if (p.get('i') || p.get('t')) {
-                // 進入嵌入模式
                 document.body.classList.add('widget-mode');
                 const title = p.get('t') || "重要日子";
                 document.title = title;
 
                 document.getElementById('v-icon').innerText = p.get('i') || "🌿";
                 document.getElementById('v-title').innerText = title;
-                document.getElementById('v-date').innerText = "START: " + (p.get('d') || "2026.01.24").replace(/-/g, '.');
+                document.getElementById('v-date').innerText = "START: " + (p.get('d') || "2026-01-24").replace(/-/g, '.');
 
                 const result = calculateDays(p.get('d'));
                 document.getElementById('v-num').innerText = result.num;
@@ -165,30 +161,52 @@
                 document.documentElement.style.setProperty('--text-color', p.get('tx') || "#4a5d4e");
                 document.documentElement.style.setProperty('--bg-color', p.get('bg') || "#ffffff");
             } else {
-                // 進入產生器模式：同步一次初始值
                 preview();
             }
             document.body.classList.add('loaded');
         }
 
-        function copyURL() {
+        // 強效複製網址 (修正 ID 並強化 API)
+        async function copyURL() {
             const i = encodeURIComponent(document.getElementById('in-i').value);
             const t = encodeURIComponent(document.getElementById('in-t').value);
-            const d = document.getElementById('in-date').value;
+            const d = document.getElementById('in-d').value;
             const a = encodeURIComponent(document.getElementById('in-a').value);
             const tx = encodeURIComponent(document.getElementById('in-tx').value);
             const bg = encodeURIComponent(document.getElementById('in-bg').value);
             
-            const baseUrl = window.location.href.split('?')[0];
+            const baseUrl = window.location.origin + window.location.pathname;
             const finalUrl = `${baseUrl}?i=${i}&t=${t}&d=${d}&a=${a}&tx=${tx}&bg=${bg}`;
             
-            const el = document.createElement("textarea");
-            el.value = finalUrl;
-            document.body.appendChild(el);
-            el.select();
-            document.execCommand('copy');
-            document.body.removeChild(el);
-            
+            try {
+                // 優先嘗試現代 Clipboard API
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(finalUrl);
+                    showDone();
+                } else {
+                    throw new Error();
+                }
+            } catch (err) {
+                // 備用方案 (針對不支援 API 的環境)
+                const textArea = document.createElement("textarea");
+                textArea.value = finalUrl;
+                textArea.style.position = "fixed";
+                textArea.style.left = "-9999px";
+                textArea.style.top = "0";
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    showDone();
+                } catch (copyErr) {
+                    alert("瀏覽器限制自動複製，請手動複製網址列。");
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+
+        function showDone() {
             const msg = document.getElementById('msg');
             msg.style.display = 'block';
             setTimeout(() => msg.style.display = 'none', 3000);
@@ -198,4 +216,3 @@
     </script>
 </body>
 </html>
-
