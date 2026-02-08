@@ -95,7 +95,7 @@
     <div id="generator">
         <h3>橫式插件配置</h3>
         <div class="field"><label>圖標 Emoji</label><input type="text" id="in-i" value="🌿"></div>
-        <div class="field"><label>標題文字</label><input type="text" id="in-t" value="相遇的季節"></div>
+        <div class="field"><label>標題文字</label><input type="text" id="in-t" value="相遇的日子"></div>
         <div class="field"><label>開始日期</label><input type="date" id="in-d" value="2026-01-24"></div>
         <div class="colors">
             <div class="field"><label>數字色</label><input type="color" id="in-a" value="#a8d5ba"></div>
@@ -108,7 +108,7 @@
     <script>
         function update() {
             const p = new URLSearchParams(window.location.search);
-            const title = p.get('t') || "重要日子";
+            const title = p.get('t') || "相遇的日子";
             document.title = title; // 動態更新分頁標題
 
             document.getElementById('v-icon').innerText = p.get('i') || "🌿";
@@ -167,4 +167,5 @@
         window.onload = update;
     </script>
 </body>
+
 </html>
