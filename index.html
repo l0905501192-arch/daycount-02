@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> </title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #4a5d4e;
+            --accent-color: #a8d5ba;
+        }
+
+        /* 初始狀態完全隱藏，防止閃爍與雜訊 */
+        body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #f4f6f4;
+            font-family: 'Montserrat', 'Noto Sans TC', sans-serif;
+            visibility: hidden; 
+        }
+
+        body.loaded { visibility: visible; }
+
+        /* --- 橫版膠囊插件樣式 --- */
+        .widget-card {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            width: 100%;
+            max-width: 520px;
+            height: 110px;
+            padding: 0 45px;
+            border-radius: 55px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+            border: 1px solid rgba(0,0,0,0.06);
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .left { display: flex; align-items: center; gap: 20px; }
+        .icon { font-size: 2.6rem; }
+        .info { text-align: left; }
+        .title-text { font-size: 1.05rem; font-weight: 500; letter-spacing: 1.5px; margin-bottom: 2px; }
+        .date-label { font-size: 0.7rem; opacity: 0.4; letter-spacing: 1px; }
+
+        .right { display: flex; align-items: baseline; gap: 10px; }
+        .num { font-size: 3.8rem; font-weight: 700; color: var(--accent-color); line-height: 1; }
+        .unit { font-size: 0.95rem; font-weight: 500; opacity: 0.8; letter-spacing: 2px; }
+
+        /* --- 生成器面板 --- */
+        #generator {
+            margin-top: 40px;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 28px;
+            width: 340px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.08);
+        }
+        h3 { margin: 0 0 20px 0; font-size: 1.2rem; color: #333; text-align: center; }
+        .field { margin-bottom: 15px; text-align: left; }
+        label { display: block; font-size: 11px; color: #aaa; margin-bottom: 6px; font-weight: 600; }
+        input { width: 100%; padding: 10px; border: 1px solid #f0f0f0; border-radius: 10px; box-sizing: border-box; outline: none; }
+        .colors { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+        .btn { width: 100%; padding: 14px; background: #4a5d4e; color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; margin-top: 15px; }
+
+        /* 嵌入模式隱藏生成器 */
+        body.widget-mode #generator { display: none; }
+        body.widget-mode { background: transparent !important; }
+    </style>
+</head>
+<body>
+
+    <div class="widget-card" id="card">
+        <div class="left">
+            <span class="icon" id="v-icon">🌿</span>
+            <div class="info">
+                <div class="title-text" id="v-title"> </div>
+                <div class="date-label" id="v-date"> </div>
+            </div>
+        </div>
+        <div class="right">
+            <div class="num" id="v-num">1</div>
+            <div class="unit" id="v-unit">已度過</div>
+        </div>
+    </div>
+
+    <div id="generator">
+        <h3>橫式插件配置</h3>
+        <div class="field"><label>圖標 Emoji</label><input type="text" id="in-i" value="🌿"></div>
+        <div class="field"><label>標題文字</label><input type="text" id="in-t" value="相遇的季節"></div>
+        <div class="field"><label>開始日期</label><input type="date" id="in-d" value="2026-01-24"></div>
+        <div class="colors">
+            <div class="field"><label>數字色</label><input type="color" id="in-a" value="#a8d5ba"></div>
+            <div class="field"><label>文字色</label><input type="color" id="in-tx" value="#4a5d4e"></div>
+            <div class="field"><label>背景色</label><input type="color" id="in-bg" value="#ffffff"></div>
+        </div>
+        <button class="btn" onclick="copyURL()">複製專屬網址</button>
+    </div>
+
+    <script>
+        function update() {
+            const p = new URLSearchParams(window.location.search);
+            const title = p.get('t') || "重要日子";
+            document.title = title; // 動態更新分頁標題
+
+            document.getElementById('v-icon').innerText = p.get('i') || "🌿";
+            document.getElementById('v-title').innerText = title;
+            document.getElementById('v-date').innerText = "START: " + (p.get('d') || "2026-01-24").replace(/-/g, '.');
+
+            const start = new Date(p.get('d') || "2026-01-24");
+            const today = new Date();
+            today.setHours(0,0,0,0); start.setHours(0,0,0,0);
+            const diff = Math.floor((today - start) / 86400000);
+            
+            const numEl = document.getElementById('v-num');
+            const unitEl = document.getElementById('v-unit');
+
+            if (diff >= 0) {
+                numEl.innerText = diff + 1; // Day + 1 邏輯
+                unitEl.innerText = "已度過";
+            } else {
+                numEl.innerText = Math.abs(diff); 
+                unitEl.innerText = "倒數中";
+            }
+
+            document.documentElement.style.setProperty('--accent-color', p.get('a') || "#a8d5ba");
+            document.documentElement.style.setProperty('--text-color', p.get('tx') || "#4a5d4e");
+            document.documentElement.style.setProperty('--bg-color', p.get('bg') || "#ffffff");
+
+            // 判斷是否為嵌入模式
+            if (p.get('i') || p.get('t')) {
+                document.body.classList.add('widget-mode');
+            }
+            
+            // 載入完成，顯示內容
+            document.body.classList.add('loaded');
+        }
+
+        function copyURL() {
+            const i = encodeURIComponent(document.getElementById('in-i').value);
+            const t = encodeURIComponent(document.getElementById('in-t').value);
+            const d = document.getElementById('in-d').value;
+            const a = encodeURIComponent(document.getElementById('in-a').value);
+            const tx = encodeURIComponent(document.getElementById('in-tx').value);
+            const bg = encodeURIComponent(document.getElementById('in-bg').value);
+            
+            const baseUrl = window.location.href.split('?')[0];
+            const finalUrl = `${baseUrl}?i=${i}&t=${t}&d=${d}&a=${a}&tx=${tx}&bg=${bg}`;
+            
+            const el = document.createElement("textarea");
+            el.value = finalUrl;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+            alert("橫式網址已複製！");
+        }
+
+        window.onload = update;
+    </script>
+</body>
+</html>
